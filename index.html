@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>WordGraphics</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#7c3aed;--glass:rgba(255,255,255,0.04)}
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter, 'Noto Sans KR', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+      background:linear-gradient(180deg,#071024 0%, #071a2a 100%);
+      color:#e6eef8;
+      display:grid;
+      place-items:center;
+      padding:24px;
+    }
+    .card{
+      width:min(920px,96vw);
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:16px;
+      padding:28px;
+      box-shadow:0 8px 30px rgba(2,6,23,0.6);
+      border:1px solid rgba(255,255,255,0.04);
+    }
+    h1{margin:0 0 12px 0;font-size:18px}
+    p.lead{margin:0 0 18px 0;color:#9fb2d8}
+
+    .input-wrap{display:flex;justify-content:center;margin-bottom:18px}
+    input[type="text"]{
+      width:100%;max-width:720px;padding:16px 18px;border-radius:12px;border:0;background:var(--glass);color:inherit;font-size:18px;outline:3px solid transparent;transition:outline .18s ease, transform .08s ease;backdrop-filter: blur(6px);
+    }
+    input[type="text"]:focus{outline:3px solid rgba(124,58,237,0.18);transform:translateY(-1px)}
+
+    .emoji-strip{
+      min-height:84px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:14px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.02);
+    }
+    .emoji{
+      font-size:30px;padding:8px 12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));box-shadow:0 4px 12px rgba(2,6,23,0.45);display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px
+    }
+
+    .controls{display:flex;gap:8px;margin-top:12px}
+    button{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:10px;color:inherit;cursor:pointer}
+    button:hover{border-color:rgba(124,58,237,0.28)}
+
+    @media (max-width:520px){
+      .emoji{font-size:24px;min-width:40px;min-height:40px}
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>WordGraphics</h1>
+    <p class="lead">나중에 이모지를 제작한 그래픽으로 삽입할 예정입니다.</p>
+
+    <div class="input-wrap">
+      <input id="typed" type="text" autocomplete="off" autocapitalize="off" placeholder="텍스트를 입력하세요." />
+    </div>
+
+    <div id="emojiStrip" class="emoji-strip" aria-live="polite"></div>
+
+    <div class="controls">
+      <button id="clearBtn">초기화</button>
+      <button id="copyBtn">이모지 복사</button>
+    </div>
+
+  </div>
+
+  <script>
+    // 키 → 이모지 매핑 (소문자 기준). 필요하면 자유롭게 수정하세요.
+    const KEY_TO_EMOJI = {
+      'a':'🍎','b':'🅱️','c':'🌜','d':'🐬','e':'🥚','f':'🎏','g':'🦒','h':'🏠','i':'🍦','j':'🕹️','k':'🔑','l':'🍋','m':'🌕','n':'🎶','o':'🅾️','p':'🅿️','q':'❓','r':'🌈','s':'☀️','t':'🌴','u':'☂️','v':'✅','w':'🌊','x':'❌','y':'🍸','z':'⚡',
+      '0':'0️⃣','1':'1️⃣','2':'2️⃣','3':'3️⃣','4':'4️⃣','5':'5️⃣','6':'6️⃣','7':'7️⃣','8':'8️⃣','9':'9️⃣',
+      ' ':'␣','Enter':'⏎','Tab':'⇥','Shift':'⇧','Control':'⌃','Alt':'⎇','Meta':'🪪','Backspace':'⌫',
+      ',':',','.' :'.','/':'/','\\':'\\',"'":"'","\"":"\"",'!':'❗','?':'❓',':':':',';':';','-':'➖','=':'➕','+':'➕','*':'✳️','(':'(',')':')','[':'[',']':']','{':'{','}':'}','@':'@','#':'#','$':'$','%':'%','^':'^','&':'&'
+    };
+
+    const input = document.getElementById('typed');
+    const emojiStrip = document.getElementById('emojiStrip');
+    const clearBtn = document.getElementById('clearBtn');
+    const copyBtn = document.getElementById('copyBtn');
+
+    // 현재 보여지는 이모지 목록을 배열로 관리
+    const emojis = [];
+
+    function renderEmojis(){
+      emojiStrip.innerHTML = '';
+      if(emojis.length === 0){
+        const hint = document.createElement('div');
+        hint.style.opacity = 0.45;hint.textContent = '아직 아무 키도 누르지 않았습니다.';emojiStrip.appendChild(hint);return;
+      }
+      for(const e of emojis){
+        const el = document.createElement('div');el.className = 'emoji';el.textContent = e;emojiStrip.appendChild(el);
+      }
+      // 스크롤을 끝으로
+      emojiStrip.scrollIntoView({behavior:'smooth', block:'nearest'});
+    }
+
+    // keydown 이벤트로 키 입력을 감지한다. (Backspace/Enter 등도 잡을 수 있음)
+    input.addEventListener('keydown', (ev) => {
+      const key = ev.key; // 예: 'a', 'Enter', 'Backspace'
+
+      // 조합 중(IME)인 경우(ev.isComposing)가 true일 수 있으니 그때는 무시
+      if(ev.isComposing) return;
+
+      if(key === 'Backspace'){
+        // 입력창의 실제 텍스트와 연동하려면 아래와 같이 처리 (이모지 목록에서 마지막 아이템 제거)
+        if(emojis.length) emojis.pop();
+        // 실제 input의 value는 브라우저가 자동으로 지워준다.
+        // render 후 기본 동작 계속 실행
+        setTimeout(renderEmojis, 0);
+        return; // 기본 동작 허용
+      }
+
+      // Enter는 줄바꿈 대신 이모지로 표시
+      if(key === 'Enter'){
+        emojis.push(KEY_TO_EMOJI['Enter'] || '⏎');
+        renderEmojis();
+        // allow default to insert newline only if it's a textarea; for input[type=text] prevent default so it doesn't submit forms
+        ev.preventDefault();
+        return;
+      }
+
+      // Tab: 포커스 이동을 막고 이모지를 추가하자
+      if(key === 'Tab'){
+        emojis.push(KEY_TO_EMOJI['Tab']);
+        renderEmojis();
+        ev.preventDefault();
+        return;
+      }
+
+      // Shift, Control 등 modifier만 누르면 (실제 문자는 입력되지 않음) 이모지로 추가할 수 있음
+      if(['Shift','Control','Alt','Meta'].includes(key)){
+        emojis.push(KEY_TO_EMOJI[key] || key);
+        renderEmojis();
+        ev.preventDefault();
+        return;
+      }
+
+      // 보통의 문자키(영문, 숫자, 기호 등). 브라우저는 key에 입력된 문자를 준다.
+      const kLower = key.length === 1 ? key.toLowerCase() : key;
+      const mapped = KEY_TO_EMOJI[kLower] || KEY_TO_EMOJI[key] || key;
+      emojis.push(mapped);
+      // render는 비동기적으로 해도 괜찮음
+      setTimeout(renderEmojis, 0);
+      // 기본 동작 허용(입력창에 글자가 입력되도록)
+    });
+
+    // Clear 버튼
+    clearBtn.addEventListener('click', () => {
+      emojis.length = 0; input.value = ''; renderEmojis(); input.focus();
+    });
+
+    // 복사 버튼: visible 이모지들을 하나의 문자열로 복사
+    copyBtn.addEventListener('click', async () => {
+      try{
+        const text = emojis.join(' ');
+        await navigator.clipboard.writeText(text);
+        copyBtn.textContent = '복사됨!';
+        setTimeout(()=>copyBtn.textContent='이모지 복사',900);
+      }catch(e){
+        copyBtn.textContent = '복사 실패';
+        setTimeout(()=>copyBtn.textContent='이모지 복사',900);
+      }
+      input.focus();
+    });
+
+    // 초기 렌더
+    renderEmojis();
+
+    // 포커스 UX: 페이지 클릭하면 입력창 포커스
+    document.body.addEventListener('click', (e)=>{
+      if(e.target !== input) input.focus();
+    });
+  </script>
+</body>
+</html>
