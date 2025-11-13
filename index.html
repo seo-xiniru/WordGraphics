@@ -45,6 +45,28 @@
     button{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:10px;color:inherit;cursor:pointer}
     button:hover{border-color:rgba(124,58,237,0.28)}
 
+    .wordbook{
+      margin-top:20px;
+      background:rgba(255,255,255,0.03);
+      border-radius:10px;
+      padding:12px;
+      overflow:hidden;
+      max-height:0;
+      opacity:0;
+      transition:max-height .4s ease, opacity .3s ease;
+      display:none;
+    }
+    .wordbook.open{
+      display:block;
+      max-height:400px;
+      opacity:1;
+      overflow-y:auto;
+    }
+
+    .word-item{display:flex;align-items:center;gap:10px;margin-bottom:8px;padding:6px 10px;border-radius:8px;background:rgba(255,255,255,0.03)}
+    .word-item .emoji{font-size:24px;min-width:30px;min-height:30px;box-shadow:none;background:none;padding:0}
+    .toggle-book{margin-top:10px;text-align:center;cursor:pointer;color:#9fb2d8;font-size:14px}
+
     @media (max-width:520px){
       .emoji{font-size:24px;min-width:40px;min-height:40px}
     }
@@ -64,80 +86,82 @@
     <div class="controls">
       <button id="clearBtn">초기화</button>
       <button id="copyBtn">이모지 복사</button>
+      <button id="saveBtn">저장</button>
     </div>
 
+    <div class="toggle-book" id="toggleBook">📘 단어장 펼치기</div>
+    <div id="wordBook" class="wordbook"></div>
   </div>
 
   <script>
     const KEY_TO_EMOJI = {
-      'a':'🍎','b':'🅱️','c':'🌜','d':'🐬','e':'🥚','f':'🎏','g':'🦒','h':'🏠','i':'🍦','j':'🕹️','k':'🔑','l':'🍋','m':'🌕','n':'🎶','o':'🅾️','p':'🅿️','q':'❓','r':'🌈','s':'☀️','t':'🌴','u':'☂️','v':'✅','w':'🌊','x':'❌','y':'🍸','z':'⚡',
-      '0':'0️⃣','1':'1️⃣','2':'2️⃣','3':'3️⃣','4':'4️⃣','5':'5️⃣','6':'6️⃣','7':'7️⃣','8':'8️⃣','9':'9️⃣',
-      ' ':'␣','Enter':'⏎','Tab':'⇥','Shift':'⇧','Control':'⌃','Alt':'⎇','Meta':'🪪','Backspace':'⌫',
-      ',':',','.' :'.','/':'/','\\':'\\',"'":"'","\"":"\"",'!':'❗','?':'❓',':':':',';':';','-':'➖','=':'➕','+':'➕','*':'✳️','(':'(',')':')','[':'[',']':']','{':'{','}':'}','@':'@','#':'#','$':'$','%':'%','^':'^','&':'&'
+      'a':'🍎','b':'🅱️','c':'🌜','d':'🐬','e':'🥚','f':'🎏','g':'🦒','h':'🏠','i':'🍦','j':'🕹️','k':'🔑','l':'🍋','m':'🌕','n':'🎶','o':'🅾️','p':'🅿️','q':'❓','r':'🌈','s':'☀️','t':'🌴','u':'☂️','v':'✅','w':'🌊','x':'❌','y':'🍸','z':'⚡',' ':'␣'
     };
 
     const input = document.getElementById('typed');
     const emojiStrip = document.getElementById('emojiStrip');
     const clearBtn = document.getElementById('clearBtn');
     const copyBtn = document.getElementById('copyBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const wordBook = document.getElementById('wordBook');
+    const toggleBook = document.getElementById('toggleBook');
 
     const emojis = [];
+    const wordList = [];
 
     function renderEmojis(){
       emojiStrip.innerHTML = '';
       if(emojis.length === 0){
         const hint = document.createElement('div');
-        hint.style.opacity = 0.45;hint.textContent = '아직 아무 키도 누르지 않았습니다.';emojiStrip.appendChild(hint);return;
+        hint.style.opacity = 0.45;
+        hint.textContent = '아직 아무 키도 입력하지 않았습니다.';
+        emojiStrip.appendChild(hint);
+        return;
       }
       for(const e of emojis){
-        const el = document.createElement('div');el.className = 'emoji';el.textContent = e;emojiStrip.appendChild(el);
+        const el = document.createElement('div');
+        el.className = 'emoji';
+        el.textContent = e;
+        emojiStrip.appendChild(el);
       }
-  
-      emojiStrip.scrollIntoView({behavior:'smooth', block:'nearest'});
+    }
+
+    function renderWordBook(){
+      wordBook.innerHTML = '';
+      if(wordList.length === 0){
+        const empty = document.createElement('div');
+        empty.style.opacity = 0.45;
+        empty.textContent = '저장된 단어가 없습니다.';
+        wordBook.appendChild(empty);
+        return;
+      }
+      for(const item of wordList){
+        const div = document.createElement('div');
+        div.className = 'word-item';
+        const emojiDiv = document.createElement('div');
+        emojiDiv.className = 'emoji';
+        emojiDiv.textContent = item.emojis;
+        const textDiv = document.createElement('div');
+        textDiv.textContent = item.text;
+        div.appendChild(emojiDiv);
+        div.appendChild(textDiv);
+        wordBook.appendChild(div);
+      }
     }
 
     input.addEventListener('keydown', (ev) => {
-      const key = ev.key; 
-
+      const key = ev.key;
       if(ev.isComposing) return;
-
-      if(key === 'Backspace'){
-        
-        if(emojis.length) emojis.pop();
-        
+      if(/^[a-zA-Z ]$/.test(key)){
+        const lower = key.toLowerCase();
+        emojis.push(KEY_TO_EMOJI[lower] || key);
         setTimeout(renderEmojis, 0);
-        return; 
-      }
-
-    
-      if(key === 'Enter'){
-        emojis.push(KEY_TO_EMOJI['Enter'] || '⏎');
-        renderEmojis();
-    
+      } else if(key === 'Backspace'){
+        if(emojis.length) emojis.pop();
+        setTimeout(renderEmojis, 0);
+      } else {
         ev.preventDefault();
-        return;
       }
-
-      if(key === 'Tab'){
-        emojis.push(KEY_TO_EMOJI['Tab']);
-        renderEmojis();
-        ev.preventDefault();
-        return;
-      }
-
-      if(['Shift','Control','Alt','Meta'].includes(key)){
-        emojis.push(KEY_TO_EMOJI[key] || key);
-        renderEmojis();
-        ev.preventDefault();
-        return;
-      }
-
-      const kLower = key.length === 1 ? key.toLowerCase() : key;
-      const mapped = KEY_TO_EMOJI[kLower] || KEY_TO_EMOJI[key] || key;
-      emojis.push(mapped);
-      
-      setTimeout(renderEmojis, 0);
-
     });
 
     clearBtn.addEventListener('click', () => {
@@ -157,11 +181,28 @@
       input.focus();
     });
 
-    renderEmojis();
-
-    document.body.addEventListener('click', (e)=>{
-      if(e.target !== input) input.focus();
+    saveBtn.addEventListener('click', ()=>{
+      const text = input.value.trim();
+      if(!text || emojis.length === 0) return;
+      wordList.push({emojis: emojis.join(''), text});
+      renderWordBook();
+      emojis.length = 0; input.value = ''; renderEmojis();
     });
+
+    toggleBook.addEventListener('click', ()=>{
+      if(wordBook.classList.contains('open')){
+        wordBook.classList.remove('open');
+        setTimeout(()=>{wordBook.style.display='none';},400);
+        toggleBook.textContent = '📘 단어장 펼치기';
+      } else {
+        wordBook.style.display='block';
+        setTimeout(()=>wordBook.classList.add('open'),10);
+        toggleBook.textContent = '📕 단어장 접기';
+      }
+    });
+
+    renderEmojis();
+    renderWordBook();
   </script>
 </body>
 </html>
