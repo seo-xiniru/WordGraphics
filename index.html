@@ -69,7 +69,6 @@
   </div>
 
   <script>
-    // 키 → 이모지 매핑 (소문자 기준). 필요하면 자유롭게 수정하세요.
     const KEY_TO_EMOJI = {
       'a':'🍎','b':'🅱️','c':'🌜','d':'🐬','e':'🥚','f':'🎏','g':'🦒','h':'🏠','i':'🍦','j':'🕹️','k':'🔑','l':'🍋','m':'🌕','n':'🎶','o':'🅾️','p':'🅿️','q':'❓','r':'🌈','s':'☀️','t':'🌴','u':'☂️','v':'✅','w':'🌊','x':'❌','y':'🍸','z':'⚡',
       '0':'0️⃣','1':'1️⃣','2':'2️⃣','3':'3️⃣','4':'4️⃣','5':'5️⃣','6':'6️⃣','7':'7️⃣','8':'8️⃣','9':'9️⃣',
@@ -82,7 +81,6 @@
     const clearBtn = document.getElementById('clearBtn');
     const copyBtn = document.getElementById('copyBtn');
 
-    // 현재 보여지는 이모지 목록을 배열로 관리
     const emojis = [];
 
     function renderEmojis(){
@@ -94,36 +92,32 @@
       for(const e of emojis){
         const el = document.createElement('div');el.className = 'emoji';el.textContent = e;emojiStrip.appendChild(el);
       }
-      // 스크롤을 끝으로
+  
       emojiStrip.scrollIntoView({behavior:'smooth', block:'nearest'});
     }
 
-    // keydown 이벤트로 키 입력을 감지한다. (Backspace/Enter 등도 잡을 수 있음)
     input.addEventListener('keydown', (ev) => {
-      const key = ev.key; // 예: 'a', 'Enter', 'Backspace'
+      const key = ev.key; 
 
-      // 조합 중(IME)인 경우(ev.isComposing)가 true일 수 있으니 그때는 무시
       if(ev.isComposing) return;
 
       if(key === 'Backspace'){
-        // 입력창의 실제 텍스트와 연동하려면 아래와 같이 처리 (이모지 목록에서 마지막 아이템 제거)
+        
         if(emojis.length) emojis.pop();
-        // 실제 input의 value는 브라우저가 자동으로 지워준다.
-        // render 후 기본 동작 계속 실행
+        
         setTimeout(renderEmojis, 0);
-        return; // 기본 동작 허용
+        return; 
       }
 
-      // Enter는 줄바꿈 대신 이모지로 표시
+    
       if(key === 'Enter'){
         emojis.push(KEY_TO_EMOJI['Enter'] || '⏎');
         renderEmojis();
-        // allow default to insert newline only if it's a textarea; for input[type=text] prevent default so it doesn't submit forms
+    
         ev.preventDefault();
         return;
       }
 
-      // Tab: 포커스 이동을 막고 이모지를 추가하자
       if(key === 'Tab'){
         emojis.push(KEY_TO_EMOJI['Tab']);
         renderEmojis();
@@ -131,7 +125,6 @@
         return;
       }
 
-      // Shift, Control 등 modifier만 누르면 (실제 문자는 입력되지 않음) 이모지로 추가할 수 있음
       if(['Shift','Control','Alt','Meta'].includes(key)){
         emojis.push(KEY_TO_EMOJI[key] || key);
         renderEmojis();
@@ -139,21 +132,18 @@
         return;
       }
 
-      // 보통의 문자키(영문, 숫자, 기호 등). 브라우저는 key에 입력된 문자를 준다.
       const kLower = key.length === 1 ? key.toLowerCase() : key;
       const mapped = KEY_TO_EMOJI[kLower] || KEY_TO_EMOJI[key] || key;
       emojis.push(mapped);
-      // render는 비동기적으로 해도 괜찮음
+      
       setTimeout(renderEmojis, 0);
-      // 기본 동작 허용(입력창에 글자가 입력되도록)
+
     });
 
-    // Clear 버튼
     clearBtn.addEventListener('click', () => {
       emojis.length = 0; input.value = ''; renderEmojis(); input.focus();
     });
 
-    // 복사 버튼: visible 이모지들을 하나의 문자열로 복사
     copyBtn.addEventListener('click', async () => {
       try{
         const text = emojis.join(' ');
@@ -167,10 +157,8 @@
       input.focus();
     });
 
-    // 초기 렌더
     renderEmojis();
 
-    // 포커스 UX: 페이지 클릭하면 입력창 포커스
     document.body.addEventListener('click', (e)=>{
       if(e.target !== input) input.focus();
     });
