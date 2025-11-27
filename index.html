@@ -5,87 +5,60 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>WordGraphics</title>
   <style>
-    :root{--bg:#0f1724;--card:#0b1220;--accent:#7c3aed;--glass:rgba(255,255,255,0.04)}
-    *{box-sizing:border-box}
-    html,body{height:100%}
     body{
+      background:#ffffff;
       margin:0;
-      font-family:Inter, 'Noto Sans KR', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-      background:linear-gradient(180deg,#071024 0%, #071a2a 100%);
-      color:#e6eef8;
+      font-family:Inter, 'Noto Sans KR', system-ui;
       display:grid;
       place-items:center;
       padding:24px;
     }
-    .card{
-      width:min(920px,96vw);
-      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius:16px;
-      padding:28px;
-      box-shadow:0 8px 30px rgba(2,6,23,0.6);
-      border:1px solid rgba(255,255,255,0.04);
-    }
-    h1{margin:0 0 12px 0;font-size:18px}
-    p.lead{margin:0 0 18px 0;color:#9fb2d8}
+    .card{width:min(920px,96vw);background:#fff;border-radius:16px;padding:28px;box-shadow:0 8px 30px rgba(0,0,0,0.15);border:1px solid #ddd}
+    h1{margin:0 0 12px 0;font-size:18px;color:#333}
 
     .input-wrap{display:flex;justify-content:center;margin-bottom:18px}
-    input[type="text"]{
-      width:100%;max-width:720px;padding:16px 18px;border-radius:12px;border:0;background:var(--glass);color:inherit;font-size:18px;outline:3px solid transparent;transition:outline .18s ease, transform .08s ease;backdrop-filter: blur(6px);
-    }
-    input[type="text"]:focus{outline:3px solid rgba(124,58,237,0.18);transform:translateY(-1px)}
+    textarea{width:100%;max-width:720px;padding:12px 14px;border-radius:10px;border:1px solid #ddd;background:#fafafa;color:#333;font-size:16px;resize:vertical;min-height:44px}
 
     .emoji-strip{
-      min-height:84px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:14px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.02);
+      display:flex;
+      flex-wrap:wrap;
+      gap:0;
+      padding:0;
+      margin:12px auto 0 auto;
+      width:100%;
+      max-width:1000px;
+      background:transparent;
     }
-    .emoji{
-      font-size:30px;padding:8px 12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));box-shadow:0 4px 12px rgba(2,6,23,0.45);display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px
+    .emoji-img{
+      display:block;
+      object-fit:contain;
+      margin:0;
+      padding:0;
+      flex: 0 0 auto;
     }
 
     .controls{display:flex;gap:8px;margin-top:12px}
-    button{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:10px;color:inherit;cursor:pointer}
-    button:hover{border-color:rgba(124,58,237,0.28)}
+    button{background:#f7f7f7;border:1px solid #ddd;padding:8px 12px;border-radius:8px;color:#333;cursor:pointer}
 
-    .wordbook{
-      margin-top:20px;
-      background:rgba(255,255,255,0.03);
-      border-radius:10px;
-      padding:12px;
-      overflow:hidden;
-      max-height:0;
-      opacity:0;
-      transition:max-height .4s ease, opacity .3s ease;
-      display:none;
-    }
-    .wordbook.open{
-      display:block;
-      max-height:400px;
-      opacity:1;
-      overflow-y:auto;
-    }
-
-    .word-item{display:flex;align-items:center;gap:10px;margin-bottom:8px;padding:6px 10px;border-radius:8px;background:rgba(255,255,255,0.03)}
-    .word-item .emoji{font-size:24px;min-width:30px;min-height:30px;box-shadow:none;background:none;padding:0}
-    .toggle-book{margin-top:10px;text-align:center;cursor:pointer;color:#9fb2d8;font-size:14px}
-
-    @media (max-width:520px){
-      .emoji{font-size:24px;min-width:40px;min-height:40px}
-    }
+    .wordbook{margin-top:14px;background:#fafafa;border-radius:8px;padding:10px;overflow:hidden;max-height:0;opacity:0;transition:max-height .28s ease, opacity .2s ease;display:none}
+    .wordbook.open{display:block;max-height:320px;opacity:1;overflow-y:auto}
+    .word-item{display:flex;align-items:center;gap:10px;margin-bottom:8px;padding:6px 10px;border-radius:6px;background:#f5f5f5}
+    .toggle-book{text-align:center;margin-top:10px;cursor:pointer;color:#666;font-size:14px}
   </style>
 </head>
 <body>
   <div class="card">
     <h1>WordGraphics</h1>
-    <p class="lead">나중에 이모지를 제작한 그래픽으로 삽입할 예정입니다.</p>
 
     <div class="input-wrap">
-      <input id="typed" type="text" autocomplete="off" autocapitalize="off" placeholder="텍스트를 입력하세요. (영어로 입력해주세요)" />
+      <textarea id="typed" rows="3" placeholder="텍스트를 입력하세요 (한글 지원)"></textarea>
     </div>
 
     <div id="emojiStrip" class="emoji-strip" aria-live="polite"></div>
 
     <div class="controls">
       <button id="clearBtn">초기화</button>
-      <button id="copyBtn">이모지 복사</button>
+      <button id="copyBtn">주소 복사</button>
       <button id="saveBtn">저장</button>
     </div>
 
@@ -94,115 +67,121 @@
   </div>
 
   <script>
-    const KEY_TO_EMOJI = {
-      'a':'🍎','b':'🅱️','c':'🌜','d':'🐬','e':'🥚','f':'🎏','g':'🦒','h':'🏠','i':'🍦','j':'🕹️','k':'🔑','l':'🍋','m':'🌕','n':'🎶','o':'🅾️','p':'🅿️','q':'❓','r':'🌈','s':'☀️','t':'🌴','u':'☂️','v':'✅','w':'🌊','x':'❌','y':'🍸','z':'⚡',' ':'␣'
+    const HANGUL_MAP = {
+      'ㄱ':'g','ㄲ':'g','ㅋ':'k','ㄴ':'n','ㄷ':'d','ㄸ':'d','ㅌ':'t',
+      'ㄹ':'r','ㅁ':'m','ㅂ':'b','ㅃ':'b','ㅍ':'p','ㅅ':'s','ㅆ':'s','ㅎ':'h','ㅇ':'o',
+      'ㅈ':'j','ㅉ':'j','ㅊ':'c','ㅏ':'a','ㅑ':'a','ㅓ':'e','ㅕ':'e','ㅗ':'o','ㅛ':'o',
+      'ㅜ':'u','ㅠ':'u','ㅡ':'u','ㅣ':'i'
     };
 
-    const input = document.getElementById('typed');
-    const emojiStrip = document.getElementById('emojiStrip');
+    const textarea = document.getElementById('typed');
+    const strip = document.getElementById('emojiStrip');
     const clearBtn = document.getElementById('clearBtn');
     const copyBtn = document.getElementById('copyBtn');
     const saveBtn = document.getElementById('saveBtn');
     const wordBook = document.getElementById('wordBook');
     const toggleBook = document.getElementById('toggleBook');
 
-    const emojis = [];
-    const wordList = [];
+    let items = [];
+    let wordList = [];
+    let prevValue = '';
+    let composing = false;
 
-    function renderEmojis(){
-      emojiStrip.innerHTML = '';
-      if(emojis.length === 0){
-        const hint = document.createElement('div');
-        hint.style.opacity = 0.45;
-        hint.textContent = '아직 아무 키도 입력하지 않았습니다.';
-        emojiStrip.appendChild(hint);
-        return;
-      }
-      for(const e of emojis){
-        const el = document.createElement('div');
-        el.className = 'emoji';
-        el.textContent = e;
-        emojiStrip.appendChild(el);
-      }
+    function normalizeChar(ch){
+      if(!ch) return null;
+      if(/[a-zA-Z]/.test(ch)) return ch.toLowerCase();
+      if(HANGUL_MAP[ch]) return HANGUL_MAP[ch];
+      return null;
     }
 
-    function renderWordBook(){
-      wordBook.innerHTML = '';
-      if(wordList.length === 0){
-        const empty = document.createElement('div');
-        empty.style.opacity = 0.45;
-        empty.textContent = '저장된 단어가 없습니다.';
-        wordBook.appendChild(empty);
-        return;
-      }
-      for(const item of wordList){
-        const div = document.createElement('div');
-        div.className = 'word-item';
-        const emojiDiv = document.createElement('div');
-        emojiDiv.className = 'emoji';
-        emojiDiv.textContent = item.emojis;
-        const textDiv = document.createElement('div');
-        textDiv.textContent = item.text;
-        div.appendChild(emojiDiv);
-        div.appendChild(textDiv);
-        wordBook.appendChild(div);
-      }
+    function render(){
+      strip.innerHTML = '';
+      if(items.length === 0){ strip.textContent = '입력된 문자가 없습니다.'; return; }
+
+      const baseSize = 100; // 한 줄에 10개일 때 100px
+      const maxPerLine = 10;
+
+      items.forEach((ch, idx) => {
+        const img = document.createElement('img');
+        img.src = `./zimg/${ch}.png`;
+        img.className = 'emoji-img';
+        img.style.width = baseSize + 'px';
+        img.style.height = baseSize + 'px';
+        img.alt = ch;
+        img.style.marginRight = ((idx+1) % maxPerLine === 0) ? '0' : '0px';
+        img.style.marginBottom = ((idx+1) % maxPerLine === 0) ? '4px' : '0';
+        strip.appendChild(img);
+      });
     }
 
-    input.addEventListener('keydown', (ev) => {
-      const key = ev.key;
-      if(ev.isComposing) return;
-      if(/^[a-zA-Z ]$/.test(key)){
-        const lower = key.toLowerCase();
-        emojis.push(KEY_TO_EMOJI[lower] || key);
-        setTimeout(renderEmojis, 0);
-      } else if(key === 'Backspace'){
-        if(emojis.length) emojis.pop();
-        setTimeout(renderEmojis, 0);
-      } else {
-        ev.preventDefault();
+    textarea.addEventListener('compositionstart', () => { composing = true; });
+    textarea.addEventListener('compositionend', (ev) => { composing = false; handleInputChange(ev.target.value); });
+    textarea.addEventListener('input', (ev) => { if(!composing) handleInputChange(ev.target.value); });
+
+    function handleInputChange(current){
+      if(current === prevValue) return;
+      if(current.length < prevValue.length){
+        const diff = prevValue.length - current.length;
+        for(let i=0;i<diff;i++) items.pop();
+        prevValue = current;
+        render();
+        return;
       }
+      const added = current.slice(prevValue.length);
+      for(const ch of added){
+        const mapped = normalizeChar(ch);
+        if(mapped) items.push(mapped);
+      }
+      prevValue = current;
+      render();
+    }
+
+    textarea.addEventListener('keydown', (ev) => {
+      if(ev.key === 'Backspace'){ setTimeout(()=>{ handleInputChange(textarea.value); },0); }
     });
 
-    clearBtn.addEventListener('click', () => {
-      emojis.length = 0; input.value = ''; renderEmojis(); input.focus();
-    });
+    clearBtn.addEventListener('click', ()=>{ items=[]; wordList=[]; textarea.value=''; prevValue=''; render(); });
 
-    copyBtn.addEventListener('click', async () => {
-      try{
-        const text = emojis.join(' ');
-        await navigator.clipboard.writeText(text);
-        copyBtn.textContent = '복사됨!';
-        setTimeout(()=>copyBtn.textContent='이모지 복사',900);
-      }catch(e){
-        copyBtn.textContent = '복사 실패';
-        setTimeout(()=>copyBtn.textContent='이모지 복사',900);
-      }
-      input.focus();
+    copyBtn.addEventListener('click', async ()=>{
+      const text = items.map(c=>`./zimg/${c}.png`).join('\n');
+      await navigator.clipboard.writeText(text);
+      copyBtn.textContent='복사됨!';
+      setTimeout(()=>copyBtn.textContent='주소 복사',900);
     });
 
     saveBtn.addEventListener('click', ()=>{
-      const text = input.value.trim();
-      if(!text || emojis.length === 0) return;
-      wordList.push({emojis: emojis.join(''), text});
+      const text = textarea.value.trim();
+      if(!text && items.length===0) return;
+      wordList.push({ imgs:[...items], text });
       renderWordBook();
-      emojis.length = 0; input.value = ''; renderEmojis();
+      items=[]; textarea.value=''; prevValue=''; render();
     });
+
+    function renderWordBook(){
+      wordBook.innerHTML='';
+      if(wordList.length===0){ wordBook.textContent='저장된 단어가 없습니다.'; return; }
+      wordList.forEach(w=>{
+        const row=document.createElement('div'); row.className='word-item';
+        const imgDiv=document.createElement('div');
+        w.imgs.forEach(i=>{ const img = document.createElement('img'); img.src=i; img.style.width='50px'; img.style.height='50px'; img.style.objectFit='contain'; imgDiv.appendChild(img); });
+        const tx=document.createElement('div'); tx.textContent=w.text;
+        row.appendChild(imgDiv); row.appendChild(tx); wordBook.appendChild(row);
+      });
+    }
 
     toggleBook.addEventListener('click', ()=>{
       if(wordBook.classList.contains('open')){
         wordBook.classList.remove('open');
-        setTimeout(()=>{wordBook.style.display='none';},400);
-        toggleBook.textContent = '📘 단어장 펼치기';
+        setTimeout(()=>wordBook.style.display='none',400);
+        toggleBook.textContent='📘 단어장 펼치기';
       } else {
         wordBook.style.display='block';
         setTimeout(()=>wordBook.classList.add('open'),10);
-        toggleBook.textContent = '📕 단어장 접기';
+        toggleBook.textContent='📕 단어장 접기';
       }
     });
 
-    renderEmojis();
-    renderWordBook();
+    render();
   </script>
 </body>
 </html>
