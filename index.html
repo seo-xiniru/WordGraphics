@@ -4,150 +4,239 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>WordGraphics</title>
+
   <style>
-    body{background:#ffffff;margin:0;font-family:Inter, 'Noto Sans KR', system-ui;display:grid;place-items:center;padding:24px}
-    .card{width:min(920px,96vw);background:#fff;border-radius:16px;padding:28px;box-shadow:0 8px 30px rgba(0,0,0,0.15);border:1px solid #ddd}
-    h1{margin:0 0 12px 0;font-size:18px;color:#333}
-    .input-wrap{display:flex;justify-content:center;margin-bottom:18px;gap:8px}
-    textarea{flex:1;padding:12px 14px;border-radius:10px;border:1px solid #ddd;background:#fafafa;color:#333;font-size:16px;resize:vertical;min-height:44px}
-    button{background:#f7f7f7;border:1px solid #ddd;padding:8px 12px;border-radius:8px;color:#333;cursor:pointer}
-    .emoji-strip{display:flex;flex-wrap:wrap;gap:0;padding:0;margin:12px auto 0 auto;width:100%;max-width:1000px;background:transparent}
-    .emoji-img{display:block;object-fit:contain;margin:0;padding:0;flex:0 0 auto;}
-    #recordArea{margin-top:20px;max-width:1000px;width:100%}
-    .record-item{border:1px solid #ccc;border-radius:8px;padding:6px 10px;margin-bottom:8px;display:flex;flex-direction:column;}
-    .record-title{cursor:pointer;font-weight:bold;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;}
-    .record-images{display:none;flex-wrap:wrap;gap:4px;margin-top:4px}
+    #bgCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1; 
+    }
+  </style>
+
+  <style>
+    @font-face {
+      font-family: 'MoonHalo';
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2102-01@1.0/dalmoori.woff') format('woff');
+      font-weight: normal;
+      font-display: swap;
+    }
+    body { background:#fff; margin:0; font-family:Inter,'Noto Sans KR',system-ui; display:grid; place-items:center; padding:24px;}
+    .card { width:min(920px,96vw); background:#fff; border-radius:16px; padding:28px; box-shadow:0 8px 30px rgba(0,0,0,0.15); border:1px solid #ddd;}
+    h1 { margin:0 0 12px 0; font-size:18px; color:#333; font-family:'MoonHalo';}
+    .input-wrap { display:flex; justify-content:center; margin-bottom:18px; gap:8px;}
+    textarea { flex:1; padding:12px 14px; border-radius:10px; border:1px solid #ddd; background:#fafafa; color:#333; font-size:16px; resize:vertical; min-height:44px;}
+    button { background:#f7f7f7; border:1px solid #ddd; padding:8px 12px; border-radius:8px; color:#333; cursor:pointer;}
+    .emoji-strip { display:flex; flex-wrap:wrap; gap:0; padding:0; margin:12px auto 0 auto; width:100%; max-width:1000px; background:transparent;}
+    .emoji-img { display:block; object-fit:contain; margin:0; padding:0; flex:0 0 auto;}
+    #recordArea { margin-top:20px; max-width:1000px; width:100%;}
+    .record-item { border:1px solid #ccc; border-radius:8px; padding:6px 10px; margin-bottom:8px; display:flex; flex-direction:column;}
+    .record-title { cursor:pointer; font-weight:bold; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between;}
+    .record-images { display:none; flex-wrap:wrap; gap:4px; margin-top:4px;}
+    .bottom-buttons { display:flex; gap:8px; justify-content:center; margin-top:12px;}
   </style>
 </head>
+
 <body>
-  <div class="card">
-    <h1>Nemo Diary</h1>
-    <div class="input-wrap">
-      <textarea id="typed" rows="3" placeholder="영어 텍스트를 입력하세요"></textarea>
-      <button id="clearBtn">초기화</button>
-      <button id="recordBtn">기록</button>
-    </div>
-    <div id="emojiStrip" class="emoji-strip" aria-live="polite"></div>
-    <div id="recordArea"></div>
+
+<canvas id="bgCanvas"></canvas>
+
+<h1 style="font-size:4rem; padding-top: 50px; padding-bottom: 30px;">Nemo Record</h1>
+<div class="card">
+  <div class="input-wrap">
+    <textarea id="typed" rows="3" placeholder="영어 텍스트를 입력하세요"></textarea>
+    <button id="clearBtn">초기화</button>
+    <button id="recordBtn">기록</button>
   </div>
+  <div id="emojiStrip" class="emoji-strip" aria-live="polite"></div>
+  <div id="recordArea"></div>
+  <div class="bottom-buttons">
+    <button id="clearAllBtn">전체 기록 삭제</button>
+  </div>
+</div>
 
-  <script>
-    const HANGUL_MAP = {'ㄱ':'g','ㄲ':'g','ㅋ':'k','ㄴ':'n','ㄷ':'d','ㄸ':'d','ㅌ':'t','ㄹ':'r','ㅁ':'m','ㅂ':'b','ㅃ':'b','ㅍ':'p','ㅅ':'s','ㅆ':'s','ㅎ':'h','ㅇ':'o','ㅈ':'j','ㅉ':'j','ㅊ':'c','ㅏ':'a','ㅑ':'a','ㅓ':'e','ㅕ':'e','ㅗ':'o','ㅛ':'o','ㅜ':'u','ㅠ':'u','ㅡ':'u','ㅣ':'i'};
-    const textarea = document.getElementById('typed');
-    const strip = document.getElementById('emojiStrip');
-    const clearBtn = document.getElementById('clearBtn');
-    const recordBtn = document.getElementById('recordBtn');
-    const recordArea = document.getElementById('recordArea');
-    let items = [];
-    let prevValue = '';
-    let composing = false;
+<script>
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
 
-    function normalizeChar(ch){
-      if(!ch) return null;
-      if(/[a-zA-Z]/.test(ch)) return ch.toLowerCase();
-      if(HANGUL_MAP[ch]) return HANGUL_MAP[ch];
-      return null;
+let width = window.innerWidth;
+let height = window.innerHeight;
+canvas.width = width;
+canvas.height = height;
+
+const gridSize = 200;
+const cols = Math.ceil(width / gridSize);
+const rows = Math.ceil(height / gridSize);
+
+let grid = Array.from({ length: rows }, () => Array(cols).fill(false));
+
+function drawGrid() {
+  ctx.clearRect(0, 0, width, height);
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (grid[r][c]) {
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.fillRect(c * gridSize, r * gridSize, gridSize, gridSize);
+}
+
     }
+  }
+}
 
-    function render(){
-      strip.innerHTML='';
-      if(items.length===0){strip.textContent='입력된 문자가 없습니다.';return;}
-      const baseSize=100;
-      items.forEach(ch=>{
-        const img=document.createElement('img');
-        img.src=`./zimg/${ch}.png`;
-        img.className='emoji-img';
-        img.style.width=baseSize+'px';
-        img.style.height=baseSize+'px';
-        strip.appendChild(img);
-      });
-    }
-
-    textarea.addEventListener('compositionstart',()=>{composing=true;});
-    textarea.addEventListener('compositionend',(ev)=>{composing=false;handleInputChange(ev.target.value);});
-    textarea.addEventListener('input',(ev)=>{if(!composing) handleInputChange(ev.target.value);});
-
-    function handleInputChange(current){
-      if(current===prevValue) return;
-      if(current.length<prevValue.length){
-        const diff=prevValue.length-current.length;
-        for(let i=0;i<diff;i++) items.pop();
-        prevValue=current; render(); return;
+function updateGrid() {
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (Math.random() < 0.01) {
+        grid[r][c] = !grid[r][c];
       }
-      const added=current.slice(prevValue.length);
-      for(const ch of added){
-        const mapped=normalizeChar(ch);
-        if(mapped) items.push(mapped);
-      }
-      prevValue=current; render();
     }
+  }
+}
 
-    textarea.addEventListener('keydown',ev=>{if(ev.key==='Backspace'){setTimeout(()=>{handleInputChange(textarea.value)},0);}});
+function animate() {
+  updateGrid();
+  drawGrid();
+  requestAnimationFrame(animate);
+}
 
-    clearBtn.addEventListener('click',()=>{items=[];textarea.value='';prevValue='';render();});
+animate();
 
-    function addRecord(text, imgs){
-      const recordDiv = document.createElement('div');
-      recordDiv.className = 'record-item';
+window.addEventListener('resize', () => {
+  width = window.innerWidth;
+  height = window.innerHeight;
+  canvas.width = width;
+  canvas.height = height;
+});
+</script>
 
-      const imagesDiv = document.createElement('div');
-      imagesDiv.className = 'record-images';
-      imgs.forEach(ch=>{
-        const img = document.createElement('img');
-        img.src = `./zimg/${ch}.png`;
-        img.style.width = '50px';
-        img.style.height = '50px';
-        img.style.objectFit = 'contain';
-        imagesDiv.appendChild(img);
-      });
+<script>
+const HANGUL_MAP = {
+  'ㄱ':'g','ㄲ':'g','ㅋ':'k','ㄴ':'n','ㄷ':'d','ㄸ':'d','ㅌ':'t','ㄹ':'r','ㅁ':'m',
+  'ㅂ':'b','ㅃ':'b','ㅍ':'p','ㅅ':'s','ㅆ':'s','ㅎ':'h','ㅇ':'o','ㅈ':'j','ㅉ':'j',
+  'ㅊ':'c','ㅏ':'a','ㅑ':'a','ㅓ':'e','ㅕ':'e','ㅗ':'o','ㅛ':'o','ㅜ':'u','ㅠ':'u',
+  'ㅡ':'u','ㅣ':'i'
+};
 
-      const titleContainer = document.createElement('div');
-      titleContainer.style.display = 'flex';
-      titleContainer.style.justifyContent = 'space-between';
-      titleContainer.style.alignItems = 'center';
-      titleContainer.appendChild(document.createTextNode(`${new Date().toLocaleString()}: ${text}`));
+const textarea = document.getElementById('typed');
+const strip = document.getElementById('emojiStrip');
+const clearBtn = document.getElementById('clearBtn');
+const recordBtn = document.getElementById('recordBtn');
+const clearAllBtn = document.getElementById('clearAllBtn');
+const recordArea = document.getElementById('recordArea');
 
-      const deleteBtn = document.createElement('button');
-      deleteBtn.textContent = '삭제';
-      deleteBtn.style.marginLeft = '10px';
-      deleteBtn.addEventListener('click', (ev)=>{
-        ev.stopPropagation();
-        recordArea.removeChild(recordDiv);
-        const saved = JSON.parse(localStorage.getItem('wordRecords') || '[]');
-        const index = saved.findIndex(r => r.text === text && JSON.stringify(r.imgs) === JSON.stringify(imgs));
-        if(index !== -1){
-          saved.splice(index, 1);
-          localStorage.setItem('wordRecords', JSON.stringify(saved));
-        }
-      });
+let items = [];
+let prevValue = '';
+let composing = false;
 
-      titleContainer.appendChild(deleteBtn);
-      titleContainer.addEventListener('click', ()=>{
-        imagesDiv.style.display = (imagesDiv.style.display==='flex') ? 'none' : 'flex';
-      });
+function normalizeChar(ch){
+  if(!ch) return null;
+  if(/[a-zA-Z]/.test(ch)) return ch.toLowerCase();
+  if(HANGUL_MAP[ch]) return HANGUL_MAP[ch];
+  return null;
+}
 
-      recordDiv.appendChild(titleContainer);
-      recordDiv.appendChild(imagesDiv);
-      recordArea.appendChild(recordDiv);
+function render(){
+  strip.innerHTML = '';
+  if(items.length===0){strip.textContent='입력된 문자가 없습니다.'; return;}
+  const baseSize = 100;
+  items.forEach(ch=>{
+    const img = document.createElement('img');
+    img.src = `./zimg/${ch}.png`;
+    img.className='emoji-img';
+    img.style.width = baseSize+'px';
+    img.style.height = baseSize+'px';
+    strip.appendChild(img);
+  });
+}
 
-      const saved = JSON.parse(localStorage.getItem('wordRecords') || '[]');
-      saved.push({text, imgs});
-      localStorage.setItem('wordRecords', JSON.stringify(saved));
-    }
+textarea.addEventListener('compositionstart', ()=>{composing=true;});
+textarea.addEventListener('compositionend', ev=>{composing=false; handleInputChange(ev.target.value);});
+textarea.addEventListener('input', ev=>{if(!composing) handleInputChange(ev.target.value);});
+textarea.addEventListener('keydown', ev=>{if(ev.key==='Backspace'){setTimeout(()=>{handleInputChange(textarea.value)},0);}});
 
-    recordBtn.addEventListener('click',()=>{
-      if(items.length===0) return;
-      const text=textarea.value.trim();
-      addRecord(text,[...items]);
-      items=[]; textarea.value=''; prevValue=''; render();
-    });
+clearBtn.addEventListener('click', ()=>{items=[]; textarea.value=''; prevValue=''; render();});
 
-    window.addEventListener('load',()=>{
-      const saved=JSON.parse(localStorage.getItem('wordRecords')||'[]');
-      saved.forEach(rec=>{addRecord(rec.text,rec.imgs);});
-    });
+function handleInputChange(current){
+  if(current===prevValue) return;
+  if(current.length<prevValue.length){
+    const diff = prevValue.length - current.length;
+    for(let i=0;i<diff;i++) items.pop();
+    prevValue=current; render(); return;
+  }
+  const added = current.slice(prevValue.length);
+  for(const ch of added){
+    const mapped = normalizeChar(ch);
+    if(mapped) items.push(mapped);
+  }
+  prevValue=current; render();
+}
 
-    render();
-  </script>
+function addRecord(text, imgs){
+  const recordDiv = document.createElement('div');
+  recordDiv.className='record-item';
+
+  const imagesDiv = document.createElement('div');
+  imagesDiv.className='record-images';
+  imgs.forEach(ch=>{
+    const img = document.createElement('img');
+    img.src = `./zimg/${ch}.png`;
+    img.style.width='50px';
+    img.style.height='50px';
+    img.style.objectFit='contain';
+    imagesDiv.appendChild(img);
+  });
+
+  const titleContainer = document.createElement('div');
+  titleContainer.className='record-title';
+  const titleText = document.createElement('span');
+  titleText.textContent = `${new Date().toLocaleString()}: ${text}`;
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.textContent='삭제';
+  deleteBtn.addEventListener('click', ev=>{
+    ev.stopPropagation();
+    recordArea.removeChild(recordDiv);
+    const saved = JSON.parse(localStorage.getItem('wordRecords')||'[]');
+    const index = saved.findIndex(r=>r.text===text && JSON.stringify(r.imgs)===JSON.stringify(imgs));
+    if(index!==-1){saved.splice(index,1); localStorage.setItem('wordRecords',JSON.stringify(saved));}
+  });
+
+  titleContainer.appendChild(titleText);
+  titleContainer.appendChild(deleteBtn);
+  titleContainer.addEventListener('click', ()=>{imagesDiv.style.display=(imagesDiv.style.display==='flex')?'none':'flex';});
+
+  recordDiv.appendChild(titleContainer);
+  recordDiv.appendChild(imagesDiv);
+  recordArea.appendChild(recordDiv);
+
+  const saved = JSON.parse(localStorage.getItem('wordRecords')||'[]');
+  const exists = saved.some(r=>r.text===text && JSON.stringify(r.imgs)===JSON.stringify(imgs));
+  if(!exists){saved.push({text, imgs}); localStorage.setItem('wordRecords',JSON.stringify(saved));}
+}
+
+recordBtn.addEventListener('click', ()=>{
+  if(items.length===0) return;
+  const text = textarea.value.trim();
+  addRecord(text,[...items]);
+  items=[]; textarea.value=''; prevValue=''; render();
+});
+
+clearAllBtn.addEventListener('click', ()=>{
+  if(confirm("정말 모든 기록을 삭제하시겠습니까?")){
+    recordArea.innerHTML='';
+    localStorage.removeItem('wordRecords');
+  }
+});
+
+window.addEventListener('load', ()=>{
+  const saved = JSON.parse(localStorage.getItem('wordRecords')||'[]');
+  saved.forEach(rec=>addRecord(rec.text, rec.imgs));
+});
+
+render();
+</script>
+
 </body>
 </html>
