@@ -68,22 +68,6 @@
       flex-direction: column;
       align-items: center;
     }
-  </style>
-
-  <style>
-    @font-face {
-      font-family: 'MoonHalo';
-      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2102-01@1.0/dalmoori.woff') format('woff');
-      font-weight: normal;
-      font-display: swap;
-    }
-
-    @font-face {
-      font-family: 'Pretendard';
-      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Regular.woff2') format('woff2');
-      font-weight: 400;
-      font-display: swap;
-    }
 
     .card {
       width: min(920px, 96vw);
@@ -109,8 +93,6 @@
       gap:8px;
     }
 
-    p {margin: 0 0 25px 0;}
-
     textarea {
       flex:1;
       padding:12px 14px;
@@ -131,7 +113,6 @@
       border-radius:8px;
       color:#333;
       cursor:pointer;
-      font-family: 'Pretendard', system-ui;
     }
 
     .emoji-strip {
@@ -149,10 +130,8 @@
       object-fit:contain;
     }
 
-    #recordArea {
-      margin-top:20px;
-      max-width:1000px;
-      width:100%;
+    #libraryControls {
+      margin-bottom:12px;
     }
   </style>
 
@@ -173,8 +152,6 @@
 
   <div id="nemo" class="screen active">
     <h1>Nemo Record</h1>
-    <p style="text-align:center; line-height: 1.5rem;">좋아하는 단어, 이름 무엇이든 상관 없습니다. 한 개의 키만 집중공격해도 좋아요.<br>
-      텍스트를 입력하기만 하세요. 당신만의 Nemo가 기록됩니다. 저장한 기록은 라이브러리에서 확인할 수 있습니다. </p>
 
     <div class="card">
       <div class="input-wrap">
@@ -184,13 +161,11 @@
       </div>
 
       <div id="emojiStrip" class="emoji-strip"></div>
-      <div id="recordArea"></div>
     </div>
   </div>
 
   <div id="graphic" class="screen">
     <h1>My Graphic</h1>
-     <p style="text-align:center; line-height: 1.5rem;">당신이 만든 그래픽을 자유롭게 편집하세요. 무궁무진한 패턴을 만들보세요.<br>저장한 기록은 라이브러리에서 확인할 수 있습니다.</p>
     <div class="card" style="text-align:center;">
       아직 준비되지 않은 페이지입니다.
     </div>
@@ -198,66 +173,28 @@
 
   <div id="library" class="screen">
     <h1>Library</h1>
-    <div class="card" id="libraryCard" style="text-align:center;"></div>
+    <div class="card" id="libraryCard" style="text-align:center;">
+      <div id="libraryControls">
+        <button id="deleteAllBtn">모든 기록 삭제</button>
+        <button id="selectDeleteBtn">선택 삭제</button>
+      </div>
+      <div id="libraryGrid"></div>
+    </div>
   </div>
 
 </div>
 
 <script>
-const canvas = document.getElementById('bgCanvas');
-const ctx = canvas.getContext('2d');
-let width = window.innerWidth;
-let height = window.innerHeight;
-canvas.width = width;
-canvas.height = height;
-
-const gridSize = 200;
-const cols = Math.ceil(width / gridSize);
-const rows = Math.ceil(height / gridSize);
-let grid = Array.from({ length: rows }, () => Array(cols).fill(false));
-
-function drawGrid() {
-  ctx.clearRect(0, 0, width, height);
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      if (grid[r][c]) {
-        ctx.fillStyle = 'rgba(0,0,0,0.4)';
-        ctx.fillRect(c * gridSize, r * gridSize, gridSize, gridSize);
-      }
-    }
-  }
-}
-
-function updateGrid() {
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      if (Math.random() < 0.0015) grid[r][c] = !grid[r][c];
-    }
-  }
-}
-
-function animate() {
-  updateGrid();
-  drawGrid();
-  requestAnimationFrame(animate);
-}
-
-animate();
-</script>
-
-<script>
 const HANGUL_MAP = {
   'ㄱ':'g','ㄲ':'g','ㅋ':'k','ㄴ':'n','ㄷ':'d','ㄸ':'d','ㅌ':'t','ㄹ':'r','ㅁ':'m',
   'ㅂ':'b','ㅃ':'b','ㅍ':'p','ㅅ':'s','ㅆ':'s','ㅎ':'h','ㅇ':'o','ㅈ':'j','ㅉ':'j',
-  'ㅊ':'c','ㅏ':'a','ㅑ':'a','ㅓ':'e','ㅕ':'e','ㅗ':'o','ㅛ':'o','ㅜ':'u','ㅠ':'u',
-  'ㅡ':'u','ㅣ':'i'
+  'ㅊ':'c','ㅏ':'a','ㅓ':'e','ㅗ':'o','ㅜ':'u','ㅡ':'u','ㅣ':'i'
 };
 
 const textarea = document.getElementById('typed');
 const strip = document.getElementById('emojiStrip');
 const clearBtn = document.getElementById('clearBtn');
 const recordBtn = document.getElementById('recordBtn');
-const libraryCard = document.getElementById('libraryCard');
 
 let items = [];
 let prevValue = '';
@@ -310,49 +247,105 @@ recordBtn.addEventListener('click', async ()=>{
     return;
   }
 
-  const target = document.getElementById('emojiStrip');
-  const cap = await html2canvas(target, { backgroundColor: null, scale: 2 });
-  const finalImg = cap.toDataURL('image/png');
+  const captureCanvas = await html2canvas(strip, { backgroundColor:null, scale:2 });
+
+  const finalCanvas = document.createElement('canvas');
+  finalCanvas.width = 300;
+  finalCanvas.height = 300;
+  const ctx = finalCanvas.getContext('2d');
+
+  const ratio = Math.min(300 / captureCanvas.width, 300 / captureCanvas.height);
+  const drawW = captureCanvas.width * ratio;
+  const drawH = captureCanvas.height * ratio;
+
+  ctx.drawImage(
+    captureCanvas,
+    (300-drawW)/2,
+    (300-drawH)/2,
+    drawW,
+    drawH
+  );
+
+  const finalImg = finalCanvas.toDataURL('image/png');
 
   const saved = JSON.parse(localStorage.getItem('nemoLibrary') || '[]');
   saved.push(finalImg);
   localStorage.setItem('nemoLibrary', JSON.stringify(saved));
 
-  const newImg = document.createElement('img');
-  newImg.src = finalImg;
-  newImg.style.width = '120px';
-  newImg.style.margin = '6px';
-  libraryCard.appendChild(newImg);
+  renderLibrary();
 
-  alert('라이브러리에 저장되었습니다');
-
-  items = [];
-  textarea.value = '';
-  prevValue = '';
+  items=[];
+  textarea.value='';
+  prevValue='';
   render();
 });
 
-function loadLibrary(){
+const libraryGrid = document.getElementById('libraryGrid');
+const deleteAllBtn = document.getElementById('deleteAllBtn');
+const selectDeleteBtn = document.getElementById('selectDeleteBtn');
+
+let deleteMode = false;
+
+function renderLibrary(){
   const saved = JSON.parse(localStorage.getItem('nemoLibrary') || '[]');
-  libraryCard.innerHTML = '';
-  saved.forEach(src=>{
+  libraryGrid.innerHTML = '';
+
+  saved.forEach((imgSrc, index)=>{
+    const wrap = document.createElement('div');
+    wrap.style.display = 'inline-block';
+    wrap.style.position = 'relative';
+    wrap.style.margin = '8px';
+
     const img = document.createElement('img');
-    img.src = src;
+    img.src = imgSrc;
     img.style.width = '120px';
-    img.style.margin = '6px';
-    libraryCard.appendChild(img);
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.style.position = 'absolute';
+    checkbox.style.top = '6px';
+    checkbox.style.left = '6px';
+    checkbox.style.display = deleteMode ? 'block' : 'none';
+
+    wrap.appendChild(img);
+    wrap.appendChild(checkbox);
+    libraryGrid.appendChild(wrap);
   });
 }
 
-loadLibrary();
-</script>
+deleteAllBtn.addEventListener('click', ()=>{
+  if(confirm('모든 기록을 삭제할까요?')){
+    localStorage.removeItem('nemoLibrary');
+    renderLibrary();
+  }
+});
 
-<script>
+selectDeleteBtn.addEventListener('click', ()=>{
+  if(!deleteMode){
+    deleteMode = true;
+    renderLibrary();
+    return;
+  }
+
+  const checkboxes = libraryGrid.querySelectorAll('input[type="checkbox"]');
+  const saved = JSON.parse(localStorage.getItem('nemoLibrary') || '[]');
+  const filtered = [];
+
+  checkboxes.forEach((box, i)=>{
+    if(!box.checked) filtered.push(saved[i]);
+  });
+
+  localStorage.setItem('nemoLibrary', JSON.stringify(filtered));
+  deleteMode = false;
+  renderLibrary();
+});
+
+renderLibrary();
+
 document.querySelectorAll('.menu-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     document.querySelectorAll('.menu-btn').forEach(b=>b.classList.remove('active'));
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-
     btn.classList.add('active');
     document.getElementById(btn.dataset.target).classList.add('active');
   });
