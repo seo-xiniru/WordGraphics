@@ -154,39 +154,9 @@
       max-width:1000px;
       width:100%;
     }
-
-    .record-item {
-      border:1px solid #ccc;
-      border-radius:8px;
-      padding:6px 10px;
-      margin-bottom:8px;
-      display:flex;
-      flex-direction:column;
-    }
-
-    .record-title {
-      cursor:pointer;
-      font-weight:bold;
-      margin-bottom:4px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-    }
-
-    .record-images {
-      display:none;
-      flex-wrap:wrap;
-      gap:4px;
-      margin-top:4px;
-    }
-
-    .bottom-buttons {
-      display:flex;
-      gap:8px;
-      justify-content:center;
-      margin-top:12px;
-    }
   </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 
 <body>
@@ -204,27 +174,23 @@
   <div id="nemo" class="screen active">
     <h1>Nemo Record</h1>
     <p style="text-align:center; line-height: 1.5rem;">좋아하는 단어, 이름 무엇이든 상관 없습니다. 한 개의 키만 집중공격해도 좋아요.<br>
-      텍스트를 입력하기만 하세요. 당신만의 Nemo가 기록됩니다. 저장한 모든 기록은 라이브러리에서 확인할 수 있습니다. </p>
+      텍스트를 입력하기만 하세요. 당신만의 Nemo가 기록됩니다. 저장한 기록은 라이브러리에서 확인할 수 있습니다. </p>
 
     <div class="card">
       <div class="input-wrap">
-        <textarea id="typed" rows="3" placeholder="영어 텍스트를 입력하세요"></textarea>
+        <textarea id="typed" rows="3" placeholder="텍스트를 입력하세요"></textarea>
         <button id="clearBtn">초기화</button>
         <button id="recordBtn">기록</button>
       </div>
 
       <div id="emojiStrip" class="emoji-strip"></div>
       <div id="recordArea"></div>
-
-      <div class="bottom-buttons">
-        <button id="clearAllBtn">전체 기록 삭제</button>
-      </div>
     </div>
   </div>
 
   <div id="graphic" class="screen">
     <h1>My Graphic</h1>
-     <p style="text-align:center; line-height: 1.5rem;">당신이 만든 그래픽을 자유롭게 편집하세요. 무궁무진한 패턴을 만들보세요.<br>저장한 모든 기록은 라이브러리에서 확인할 수 있습니다.</p>
+     <p style="text-align:center; line-height: 1.5rem;">당신이 만든 그래픽을 자유롭게 편집하세요. 무궁무진한 패턴을 만들보세요.<br>저장한 기록은 라이브러리에서 확인할 수 있습니다.</p>
     <div class="card" style="text-align:center;">
       아직 준비되지 않은 페이지입니다.
     </div>
@@ -232,9 +198,7 @@
 
   <div id="library" class="screen">
     <h1>Library</h1>
-    <div class="card" style="text-align:center;">
-      아직 준비되지 않은 페이지입니다.
-    </div>
+    <div class="card" id="libraryCard" style="text-align:center;"></div>
   </div>
 
 </div>
@@ -293,7 +257,7 @@ const textarea = document.getElementById('typed');
 const strip = document.getElementById('emojiStrip');
 const clearBtn = document.getElementById('clearBtn');
 const recordBtn = document.getElementById('recordBtn');
-const clearAllBtn = document.getElementById('clearAllBtn');
+const libraryCard = document.getElementById('libraryCard');
 
 let items = [];
 let prevValue = '';
@@ -340,53 +304,47 @@ clearBtn.addEventListener('click', ()=>{
   render();
 });
 
-recordBtn.addEventListener('click', ()=>{
-
+recordBtn.addEventListener('click', async ()=>{
   if(items.length === 0){
     alert('저장할 이미지가 없습니다.');
     return;
   }
 
-  const baseSize = 100;
-  const canvas = document.createElement('canvas');
-  canvas.width = items.length * baseSize;
-  canvas.height = baseSize;
-  const ctx = canvas.getContext('2d');
+  const target = document.getElementById('emojiStrip');
+  const cap = await html2canvas(target, { backgroundColor: null, scale: 2 });
+  const finalImg = cap.toDataURL('image/png');
 
-  let loaded = 0;
-  items.forEach((ch, i)=>{
-    const img = new Image();
-    img.src = `./zimg/${ch}.png`;
-    img.onload = ()=>{
-      ctx.drawImage(img, i * baseSize, 0, baseSize, baseSize);
-      loaded++;
+  const saved = JSON.parse(localStorage.getItem('nemoLibrary') || '[]');
+  saved.push(finalImg);
+  localStorage.setItem('nemoLibrary', JSON.stringify(saved));
 
-      if(loaded === items.length){
-        const finalImg = canvas.toDataURL('image/png');
+  const newImg = document.createElement('img');
+  newImg.src = finalImg;
+  newImg.style.width = '120px';
+  newImg.style.margin = '6px';
+  libraryCard.appendChild(newImg);
 
-        const saved = JSON.parse(localStorage.getItem('nemoLibrary') || '[]');
-        saved.push(finalImg);
-        localStorage.setItem('nemoLibrary', JSON.stringify(saved));
+  alert('라이브러리에 저장되었습니다');
 
-        const libCard = document.querySelector('#library .card');
-        const newImg = document.createElement('img');
-        newImg.src = finalImg;
-        newImg.style.width = '120px';
-        newImg.style.margin = '6px';
-        libCard.appendChild(newImg);
-
-        alert('라이브러리에 저장되었습니다');
-
-        items = [];
-        textarea.value = '';
-        prevValue = '';
-        render();
-      }
-    };
-  });
-
+  items = [];
+  textarea.value = '';
+  prevValue = '';
+  render();
 });
 
+function loadLibrary(){
+  const saved = JSON.parse(localStorage.getItem('nemoLibrary') || '[]');
+  libraryCard.innerHTML = '';
+  saved.forEach(src=>{
+    const img = document.createElement('img');
+    img.src = src;
+    img.style.width = '120px';
+    img.style.margin = '6px';
+    libraryCard.appendChild(img);
+  });
+}
+
+loadLibrary();
 </script>
 
 <script>
