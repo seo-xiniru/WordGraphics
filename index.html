@@ -315,7 +315,7 @@ recordBtn.addEventListener('click', async ()=>{
   saved.push(finalImg);
   localStorage.setItem('nemoLibrary', JSON.stringify(saved));
 
-  alert('라이브러리에 저장되었습니다');
+  alert('라이브러리에 저장되었습니다.');
 
   items = [];
   textarea.value = '';
@@ -345,7 +345,7 @@ function renderLibrary(){
 
     const img = document.createElement('img');
     img.src = imgSrc;
-    img.style.width = '300px';
+    img.style.width = '600px';
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
