@@ -341,11 +341,52 @@ clearBtn.addEventListener('click', ()=>{
 });
 
 recordBtn.addEventListener('click', ()=>{
-  items=[];
-  textarea.value='';
-  prevValue='';
-  render();
+
+  if(items.length === 0){
+    alert('저장할 이미지가 없습니다.');
+    return;
+  }
+
+  const baseSize = 100;
+  const canvas = document.createElement('canvas');
+  canvas.width = items.length * baseSize;
+  canvas.height = baseSize;
+  const ctx = canvas.getContext('2d');
+
+  let loaded = 0;
+  items.forEach((ch, i)=>{
+    const img = new Image();
+    img.src = `./zimg/${ch}.png`;
+    img.onload = ()=>{
+      ctx.drawImage(img, i * baseSize, 0, baseSize, baseSize);
+      loaded++;
+
+      if(loaded === items.length){
+        const finalImg = canvas.toDataURL('image/png');
+
+        const saved = JSON.parse(localStorage.getItem('nemoLibrary') || '[]');
+        saved.push(finalImg);
+        localStorage.setItem('nemoLibrary', JSON.stringify(saved));
+
+        const libCard = document.querySelector('#library .card');
+        const newImg = document.createElement('img');
+        newImg.src = finalImg;
+        newImg.style.width = '120px';
+        newImg.style.margin = '6px';
+        libCard.appendChild(newImg);
+
+        alert('라이브러리에 저장되었습니다');
+
+        items = [];
+        textarea.value = '';
+        prevValue = '';
+        render();
+      }
+    };
+  });
+
 });
+
 </script>
 
 <script>
