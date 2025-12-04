@@ -68,6 +68,22 @@
       flex-direction: column;
       align-items: center;
     }
+  </style>
+
+  <style>
+    @font-face {
+      font-family: 'MoonHalo';
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2102-01@1.0/dalmoori.woff') format('woff');
+      font-weight: normal;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: 'Pretendard';
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Regular.woff2') format('woff2');
+      font-weight: 400;
+      font-display: swap;
+    }
 
     .card {
       width: min(920px, 96vw);
@@ -93,6 +109,8 @@
       gap:8px;
     }
 
+    p {margin: 0 0 25px 0;}
+
     textarea {
       flex:1;
       padding:12px 14px;
@@ -113,6 +131,7 @@
       border-radius:8px;
       color:#333;
       cursor:pointer;
+      font-family: 'Pretendard', system-ui;
     }
 
     .emoji-strip {
@@ -130,8 +149,10 @@
       object-fit:contain;
     }
 
-    #libraryControls {
-      margin-bottom:12px;
+    #recordArea {
+      margin-top:20px;
+      max-width:1000px;
+      width:100%;
     }
   </style>
 
@@ -152,6 +173,8 @@
 
   <div id="nemo" class="screen active">
     <h1>Nemo Record</h1>
+    <p style="text-align:center; line-height: 1.5rem;">좋아하는 단어, 이름 무엇이든 상관 없습니다. 한 개의 키만 집중공격해도 좋아요.<br>
+      텍스트를 입력하기만 하세요. 당신만의 Nemo가 기록됩니다. 저장한 기록은 라이브러리에서 확인할 수 있습니다. </p>
 
     <div class="card">
       <div class="input-wrap">
@@ -161,11 +184,13 @@
       </div>
 
       <div id="emojiStrip" class="emoji-strip"></div>
+      <div id="recordArea"></div>
     </div>
   </div>
 
   <div id="graphic" class="screen">
     <h1>My Graphic</h1>
+     <p style="text-align:center; line-height: 1.5rem;">당신이 만든 그래픽을 자유롭게 편집하세요. 무궁무진한 패턴을 만들보세요.<br>저장한 기록은 라이브러리에서 확인할 수 있습니다.</p>
     <div class="card" style="text-align:center;">
       아직 준비되지 않은 페이지입니다.
     </div>
@@ -173,8 +198,9 @@
 
   <div id="library" class="screen">
     <h1>Library</h1>
+
     <div class="card" id="libraryCard" style="text-align:center;">
-      <div id="libraryControls">
+      <div style="margin-bottom:12px;">
         <button id="deleteAllBtn">모든 기록 삭제</button>
         <button id="selectDeleteBtn">선택 삭제</button>
       </div>
@@ -188,7 +214,8 @@
 const HANGUL_MAP = {
   'ㄱ':'g','ㄲ':'g','ㅋ':'k','ㄴ':'n','ㄷ':'d','ㄸ':'d','ㅌ':'t','ㄹ':'r','ㅁ':'m',
   'ㅂ':'b','ㅃ':'b','ㅍ':'p','ㅅ':'s','ㅆ':'s','ㅎ':'h','ㅇ':'o','ㅈ':'j','ㅉ':'j',
-  'ㅊ':'c','ㅏ':'a','ㅓ':'e','ㅗ':'o','ㅜ':'u','ㅡ':'u','ㅣ':'i'
+  'ㅊ':'c','ㅏ':'a','ㅑ':'a','ㅓ':'e','ㅕ':'e','ㅗ':'o','ㅛ':'o','ㅜ':'u','ㅠ':'u',
+  'ㅡ':'u','ㅣ':'i'
 };
 
 const textarea = document.getElementById('typed');
@@ -247,24 +274,31 @@ recordBtn.addEventListener('click', async ()=>{
     return;
   }
 
-  const captureCanvas = await html2canvas(strip, { backgroundColor:null, scale:2 });
+  const target = document.getElementById('emojiStrip');
+
+  const captureCanvas = await html2canvas(target, {
+    backgroundColor: null,
+    scale: 2,
+    useCORS: true
+  });
 
   const finalCanvas = document.createElement('canvas');
   finalCanvas.width = 300;
   finalCanvas.height = 300;
-  const ctx = finalCanvas.getContext('2d');
+  const fctx = finalCanvas.getContext('2d');
 
-  const ratio = Math.min(300 / captureCanvas.width, 300 / captureCanvas.height);
-  const drawW = captureCanvas.width * ratio;
-  const drawH = captureCanvas.height * ratio;
-
-  ctx.drawImage(
-    captureCanvas,
-    (300-drawW)/2,
-    (300-drawH)/2,
-    drawW,
-    drawH
+  const ratio = Math.min(
+    300 / captureCanvas.width,
+    300 / captureCanvas.height
   );
+
+  const drawWidth = captureCanvas.width * ratio;
+  const drawHeight = captureCanvas.height * ratio;
+
+  const offsetX = (300 - drawWidth) / 2;
+  const offsetY = (300 - drawHeight) / 2;
+
+  fctx.drawImage(captureCanvas, offsetX, offsetY, drawWidth, drawHeight);
 
   const finalImg = finalCanvas.toDataURL('image/png');
 
@@ -272,14 +306,18 @@ recordBtn.addEventListener('click', async ()=>{
   saved.push(finalImg);
   localStorage.setItem('nemoLibrary', JSON.stringify(saved));
 
-  renderLibrary();
+  alert('라이브러리에 저장되었습니다');
 
-  items=[];
-  textarea.value='';
-  prevValue='';
+  items = [];
+  textarea.value = '';
+  prevValue = '';
   render();
-});
 
+  renderLibrary();
+});
+</script>
+
+<script>
 const libraryGrid = document.getElementById('libraryGrid');
 const deleteAllBtn = document.getElementById('deleteAllBtn');
 const selectDeleteBtn = document.getElementById('selectDeleteBtn');
@@ -290,7 +328,7 @@ function renderLibrary(){
   const saved = JSON.parse(localStorage.getItem('nemoLibrary') || '[]');
   libraryGrid.innerHTML = '';
 
-  saved.forEach((imgSrc, index)=>{
+  saved.forEach((imgSrc)=>{
     const wrap = document.createElement('div');
     wrap.style.display = 'inline-block';
     wrap.style.position = 'relative';
@@ -329,10 +367,12 @@ selectDeleteBtn.addEventListener('click', ()=>{
 
   const checkboxes = libraryGrid.querySelectorAll('input[type="checkbox"]');
   const saved = JSON.parse(localStorage.getItem('nemoLibrary') || '[]');
-  const filtered = [];
 
+  const filtered = [];
   checkboxes.forEach((box, i)=>{
-    if(!box.checked) filtered.push(saved[i]);
+    if(!box.checked){
+      filtered.push(saved[i]);
+    }
   });
 
   localStorage.setItem('nemoLibrary', JSON.stringify(filtered));
@@ -341,11 +381,14 @@ selectDeleteBtn.addEventListener('click', ()=>{
 });
 
 renderLibrary();
+</script>
 
+<script>
 document.querySelectorAll('.menu-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     document.querySelectorAll('.menu-btn').forEach(b=>b.classList.remove('active'));
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+
     btn.classList.add('active');
     document.getElementById(btn.dataset.target).classList.add('active');
   });
