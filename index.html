@@ -164,23 +164,24 @@
 <canvas id="bgCanvas"></canvas>
 
 <div class="sidebar">
-  <button class="menu-btn active" data-target="nemo">Nemo Record</button>
+  <button class="menu-btn active" data-target="nemo">Nemo Graphics</button>
   <button class="menu-btn" data-target="graphic">Nemo Edit</button>
   <button class="menu-btn" data-target="library">Library</button>
+  <button class="menu-btn" data-target="party">!!!Party Time!!!</button>
 </div>
 
 <div class="main">
 
   <div id="nemo" class="screen active">
-    <h1>Nemo Record</h1>
+    <h1>Nemo Graphics</h1>
     <p style="text-align:center; line-height: 1.5rem;">좋아하는 단어, 이름 무엇이든 상관 없습니다. 한 개의 키만 집중공격해도 좋아요.<br>
-      텍스트를 입력하기만 하세요. 당신만의 Nemo가 기록됩니다. 저장한 기록은 라이브러리에서 확인할 수 있습니다. </p>
+      텍스트를 입력하기만 하세요. 당신만의 Nemo가 기록됩니다. 저장한 그래픽은 라이브러리에서 확인할 수 있습니다. </p>
 
     <div class="card">
       <div class="input-wrap">
         <textarea id="typed" rows="3" placeholder="텍스트를 입력하세요"></textarea>
         <button id="clearBtn">초기화</button>
-        <button id="recordBtn">기록</button>
+        <button id="recordBtn">저장</button>
       </div>
 
       <div id="emojiStrip" class="emoji-strip"></div>
@@ -190,7 +191,7 @@
 
   <div id="graphic" class="screen">
     <h1>Nemo Edit</h1>
-     <p style="text-align:center; line-height: 1.5rem;">당신이 만든 그래픽을 자유롭게 편집하세요. 무궁무진한 패턴을 만들보세요.<br>저장한 기록은 라이브러리에서 확인할 수 있습니다.</p>
+     <p style="text-align:center; line-height: 1.5rem;">당신이 만든 그래픽을 자유롭게 편집하세요. 무궁무진한 패턴을 만들보세요.<br>저장한 그래픽은 라이브러리에서 확인할 수 있습니다.</p>
     <div class="card" style="text-align:center;">
       만든 패턴으로 편집할 수 있게 하고 싶은데 아직 구현을 못했습니다...
     </div>
@@ -201,10 +202,18 @@
 
     <div class="card" id="libraryCard" style="text-align:center;">
       <div style="margin-bottom:12px;">
-        <button id="deleteAllBtn">모든 기록 삭제</button>
+        <button id="deleteAllBtn">모든 그래픽 삭제</button>
         <button id="selectDeleteBtn">선택 삭제</button>
       </div>
       <div id="libraryGrid"></div>
+    </div>
+  </div>
+
+  <div id="party" class="screen">
+    <h1>Party</h1>
+     <p style="text-align:center; line-height: 1.5rem;">당신이 만든 그래픽을 자유롭게 편집하세요. 무궁무진한 패턴을 만들보세요.<br>저장한 그래픽은 라이브러리에서 확인할 수 있습니다.</p>
+    <div class="card" style="text-align:center;">
+      만든 패턴으로 편집할 수 있게 하고 싶은데 아직 구현을 못했습니다...
     </div>
   </div>
 
@@ -336,13 +345,13 @@ function renderLibrary(){
 
     const img = document.createElement('img');
     img.src = imgSrc;
-    img.style.width = '120px';
+    img.style.width = '300px';
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.style.position = 'absolute';
-    checkbox.style.top = '6px';
-    checkbox.style.left = '6px';
+    checkbox.style.top = '8px';
+    checkbox.style.left = '8px';
     checkbox.style.display = deleteMode ? 'block' : 'none';
 
     wrap.appendChild(img);
