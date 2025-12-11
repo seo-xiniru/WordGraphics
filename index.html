@@ -12,7 +12,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      z-index: -1; 
+      z-index: -1;
     }
 
     body {
@@ -68,9 +68,7 @@
       flex-direction: column;
       align-items: center;
     }
-  </style>
 
-  <style>
     @font-face {
       font-family: 'MoonHalo';
       src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2102-01@1.0/dalmoori.woff') format('woff');
@@ -156,10 +154,30 @@
     }
 
     #libraryGrid {
-  max-height: 70vh;
-  overflow-y: auto;
-}
+      max-height: 70vh;
+      overflow-y: auto;
+    }
 
+    .party-exit {
+      position: fixed;
+      right: 18px;
+      top: 12px;
+      z-index: 10002;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      border: none;
+      padding: 8px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: none;
+    }
+
+    .party-hint {
+      color: #000;
+      font-size: 20px;
+      text-align: center;
+      padding: 12px 18px;
+    }
   </style>
 
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -217,13 +235,12 @@
 
   <div id="party" class="screen">
     <h1>Party</h1>
-     <p style="text-align:center; line-height: 1.5rem;">당신이 만든 그래픽을 자유롭게 편집하세요. 무궁무진한 패턴을 만들보세요.<br>저장한 그래픽은 라이브러리에서 확인할 수 있습니다.</p>
-    <div class="card" style="text-align:center;">
-      만든 패턴으로 편집할 수 있게 하고 싶은데 아직 구현을 못했습니다...
-    </div>
+
   </div>
 
 </div>
+
+<button id="partyExit" class="party-exit">EXIT PARTY</button>
 
 <script>
 const HANGUL_MAP = {
@@ -457,6 +474,213 @@ function animateBg() {
 }
 
 animateBg();
+</script>
+<script>
+(function () {
+  let partyMode = false;
+  let audioCtx = null;
+  let partyOverlay = null;
+  const partyExit = document.getElementById("partyExit");
+
+  function normalizeChar(ch) {
+    if (!ch) return null;
+    if (/[a-zA-Z]/.test(ch)) return ch.toLowerCase();
+    if (HANGUL_MAP[ch]) return HANGUL_MAP[ch];
+    return null;
+  }
+
+  function ensureAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+  }
+
+  function unlockAudio() {
+    ensureAudio();
+    if (audioCtx.state === "suspended" && audioCtx.resume) {
+      audioCtx.resume();
+    }
+  }
+
+  function playNoteForKey(key) {
+    if (!audioCtx) return;
+
+    const freq = 200 + ((key.charCodeAt(0) % 80) * 10);
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = "sine";
+    osc.frequency.value = freq;
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    const now = audioCtx.currentTime;
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.exponentialRampToValueAtTime(0.5, now + 0.02);
+
+    osc.start(now);
+
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+    osc.stop(now + 0.22);
+  }
+
+  function randomPosition(size) {
+    const x = Math.random() * Math.max(0, window.innerWidth - size);
+    const y = Math.random() * Math.max(0, window.innerHeight - size);
+    return { x, y };
+  }
+
+  function randomFilter() {
+    const hue = Math.floor(Math.random() * 360);
+    const sat = 200 + Math.random() * 300;
+    const bright = 50 + Math.random() * 80;
+    const contrast = 80 + Math.random() * 120;
+    return `hue-rotate(${hue}deg) saturate(${sat}%) brightness(${bright}%) contrast(${contrast}%)`;
+  }
+
+  function showImageForKey(rawKey) {
+    const mapped = normalizeChar(rawKey);
+    if (!mapped) return;
+
+    const path = `./zimg/${mapped}.png`;
+    const size = 500;
+    const { x, y } = randomPosition(size);
+
+    const img = document.createElement("img");
+    img.src = path;
+    img.style.position = "fixed";
+    img.style.left = `${x}px`;
+    img.style.top = `${y}px`;
+    img.style.width = `${size}px`;
+    img.style.height = `${size}px`;
+    img.style.objectFit = "contain";
+    img.style.filter = randomFilter();
+    img.style.zIndex = 10000;
+    img.style.pointerEvents = "none";
+    img.style.opacity = "0";
+    img.style.transition = "opacity 0.18s ease, transform 0.6s cubic-bezier(.2,.8,.2,1)";
+
+    img.onload = () => {
+      img.style.opacity = "1";
+      img.style.transform = "scale(1.06)";
+      setTimeout(() => (img.style.transform = "scale(1)"), 80);
+      setTimeout(() => {
+        img.style.transition = "opacity 0.4s";
+        img.style.opacity = "0";
+        setTimeout(() => img.remove(), 400);
+      }, 600);
+    };
+
+    img.onerror = () => {
+      img.remove();
+      const box = document.createElement("div");
+      Object.assign(box.style, {
+        position: "fixed",
+        left: `${x}px`,
+        top: `${y}px`,
+        width: `${size}px`,
+        height: `${size}px`,
+        background: "#fff",
+        zIndex: 10000,
+        pointerEvents: "none",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: "48px",
+        fontWeight: "700",
+        color: "#000",
+        filter: randomFilter(),
+        opacity: "0",
+        transition: "opacity 0.18s ease"
+      });
+
+      box.textContent = mapped.toUpperCase();
+      document.body.appendChild(box);
+
+      requestAnimationFrame(() => (box.style.opacity = "1"));
+
+      setTimeout(() => {
+        box.style.transition = "opacity 0.4s";
+        box.style.opacity = "0";
+        setTimeout(() => box.remove(), 400);
+      }, 600);
+    };
+
+    document.body.appendChild(img);
+  }
+
+  function startParty() {
+    if (partyMode) return;
+    partyMode = true;
+
+    document.querySelector(".sidebar").style.display = "none";
+    document.querySelector(".main").style.display = "none";
+
+    partyOverlay = document.createElement("div");
+    partyOverlay.id = "partyOverlay";
+
+    Object.assign(partyOverlay.style, {
+      position: "fixed",
+      left: "0",
+      top: "0",
+      width: "100vw",
+      height: "100vh",
+      background: "#fff",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: "9999",
+      overflow: "hidden"
+    });
+
+    const hint = document.createElement("div");
+    hint.className = "party-hint";
+    hint.textContent = "화면을 클릭해 사운드를 활성화하세요. 키를 누르면 이미지와 소리가 납니다.";
+    partyOverlay.appendChild(hint);
+
+    partyOverlay.addEventListener(
+      "click",
+      () => {
+        unlockAudio();
+
+        hint.style.transition = "opacity 0.3s";
+        hint.style.opacity = "0";
+
+        setTimeout(() => hint.remove(), 350);
+      },
+      { once: true }
+    );
+
+    partyExit.style.display = "block";
+    partyExit.onclick = closeParty;
+
+    document.body.appendChild(partyOverlay);
+  }
+
+  function closeParty() {
+    partyMode = false;
+
+    if (partyOverlay) partyOverlay.remove();
+
+    document.querySelector(".sidebar").style.display = "";
+    document.querySelector(".main").style.display = "";
+
+    partyExit.style.display = "none";
+  }
+
+  // 메뉴에서 Party 클릭 시 자동 실행
+  document.querySelector('[data-target="party"]').addEventListener("click", startParty);
+
+  // 키 입력 이벤트
+  window.addEventListener("keydown", (e) => {
+    if (!partyMode) return;
+    unlockAudio();
+    playNoteForKey(e.key);
+    showImageForKey(e.key);
+  });
+})();
 </script>
 
 
