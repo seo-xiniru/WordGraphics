@@ -178,6 +178,33 @@
       text-align: center;
       padding: 12px 18px;
     }
+
+    /* graphic 모드 레이아웃 */
+#graphicWrap {
+  display: flex;
+  gap: 24px;
+  margin-top: 20px;
+  align-items: flex-start;
+}
+
+#editCanvas {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.12);
+}
+
+#graphicSideText {
+  width: 260px;
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.12);
+  font-family: 'Pretendard', system-ui;
+  text-align: left;
+}
+
   </style>
 
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -214,12 +241,24 @@
   </div>
 
   <div id="graphic" class="screen">
-    <h1>Nemo Edit</h1>
-     <p style="text-align:center; line-height: 1.5rem;">당신이 만든 그래픽을 자유롭게 편집하세요. 무궁무진한 패턴을 만들보세요.<br>저장한 그래픽은 라이브러리에서 확인할 수 있습니다.</p>
-    <div class="card" style="text-align:center;">
-      만든 패턴으로 편집할 수 있게 하고 싶은데 아직 구현을 못했습니다...
+  <h1>Nemo Edit</h1>
+  <p style="text-align:center; line-height: 1.5rem; margin-bottom: 20px;">
+    당신이 만든 그래픽을 브러쉬로 사용해보세요.<br>저장한 그래픽은 라이브러리에서 확인할 수 있습니다.
+  </p>
+
+  <div id="graphicWrap">
+    <!-- 왼쪽: 브러쉬 캔버스 -->
+    <canvas id="editCanvas" width="1000" height="1000"></canvas>
+
+    <!-- 오른쪽: 설명 텍스트 -->
+    <div id="graphicSideText">
+      <h2 style="margin-top:0;">브러쉬 가이드</h2>
+      <p>라이브러리에서 이미지를 선택하면<br>
+      이 캔버스에서 브러쉬로 사용할 수 있습니다.</p>
     </div>
   </div>
+</div>
+
 
   <div id="library" class="screen">
     <h1>Library</h1>
@@ -682,6 +721,15 @@ animateBg();
   });
 })();
 </script>
+<script>
+const editCanvas = document.getElementById("editCanvas");
+const editCtx = editCanvas.getContext("2d");
+
+// 기본 배경 흰색으로 채우기
+editCtx.fillStyle = "#ffffff";
+editCtx.fillRect(0, 0, editCanvas.width, editCanvas.height);
+</script>
+
 
 
 </body>
