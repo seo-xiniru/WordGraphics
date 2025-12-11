@@ -179,7 +179,7 @@
       padding: 12px 18px;
     }
 
-    /* graphic 모드 레이아웃 */
+    
 #graphicWrap {
   display: flex;
   gap: 24px;
@@ -195,7 +195,7 @@
 }
 
 #graphicSideText .nemo-btn {
-  width: 100%;
+  width: 130%;
   padding: 12px 16px;
   margin-bottom: 12px;
   background: #000;
@@ -204,7 +204,7 @@
   border-radius: 10px;
   cursor: pointer;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 300;
   transition: 0.2s;
 }
 
@@ -224,7 +224,7 @@
 
 <div class="sidebar">
   <button class="menu-btn active" data-target="nemo">Nemo Graphics</button>
-  <button class="menu-btn" data-target="graphic">Nemo Edit</button>
+  <button class="menu-btn" data-target="graphic">Nemo Brush</button>
   <button class="menu-btn" data-target="library">Library</button>
   <button class="menu-btn" data-target="party">!!!Party Time!!!</button>
 </div>
@@ -249,26 +249,22 @@
   </div>
 
   <div id="graphic" class="screen">
-  <h1>Nemo Edit</h1>
+  <h1>Nemo Brush</h1>
   <p style="text-align:center; line-height: 1.5rem; margin-bottom: 20px;">
     당신이 만든 그래픽을 브러쉬로 사용해보세요.<br>저장한 그래픽은 라이브러리에서 확인할 수 있습니다.
   </p>
 
   <div id="graphicWrap">
-    <!-- 1000x1000 캔버스 -->
-    <canvas id="editCanvas" width="1000" height="1000"></canvas>
+  
+    <canvas id="editCanvas" width="1200" height="700"></canvas>
 
-    <!-- 오른쪽 UI 패널 -->
     <div id="graphicSideText">
-      <h2 style="margin-top:0;">브러쉬 옵션</h2>
+      <h2 style="margin-top:0; font-family: pretendard; font-size: 1rem; text-align: center;">브러쉬 옵션</h2>
 
-      <!-- 라이브러리 불러오기 버튼 -->
-      <button id="loadFromLibrary" class="nemo-btn">라이브러리에서 선택</button>
+      <button id="loadFromLibrary" class="nemo-btn">브러쉬 선택</button>
 
-      <!-- 시메트리 토글 -->
-      <button id="toggleSymmetry" class="nemo-btn">대칭 그리기 OFF</button>
+      <button id="toggleSymmetry" class="nemo-btn">대칭 OFF</button>
 
-      <p style="margin-top:20px; opacity:0.7;">이미지를 브러쉬로 사용할 수 있습니다.</p>
     </div>
   </div>
 </div>
@@ -773,18 +769,14 @@ document.getElementById("loadFromLibrary").addEventListener("click", () => {
   input.click();
 });
 
-/* ─────────────────────────────
-   2. 대칭 그리기 토글
-─────────────────────────────── */
+
 document.getElementById("toggleSymmetry").addEventListener("click", () => {
   symmetry = !symmetry;
   document.getElementById("toggleSymmetry").textContent =
-    symmetry ? "대칭 그리기 ON" : "대칭 그리기 OFF";
+    symmetry ? "대칭 ON" : "대칭 OFF";
 });
 
-/* ─────────────────────────────
-   3. 캔버스에서 브러쉬로 그리기
-─────────────────────────────── */
+
 let drawing = false;
 
 editCanvas.addEventListener("mousedown", (e) => (drawing = true));
