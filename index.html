@@ -38,7 +38,7 @@
       color: #fff;
       text-align: left;
       padding: 12px;
-      border-radius: 8px;
+      border-radius: 0px;
       cursor: pointer;
       font-size: 16px;
     }
@@ -86,7 +86,7 @@
     .card {
       width: min(920px, 96vw);
       background: #fff;
-      border-radius: 16px;
+      border-radius: 0px;
       padding: 28px;
       box-shadow: 0 8px 30px rgba(0,0,0,0.15);
       border: 1px solid #ddd;
@@ -112,7 +112,7 @@
     textarea {
       flex:1;
       padding:12px 14px;
-      border-radius:10px;
+      border-radius:0px;
       border:1px solid #ddd;
       background:#fafafa;
       color:#333;
@@ -126,7 +126,7 @@
       background:#f7f7f7;
       border:1px solid #ddd;
       padding:8px 12px;
-      border-radius:8px;
+      border-radius:0px;
       color:#333;
       cursor:pointer;
       font-family: 'Pretendard', system-ui;
@@ -167,7 +167,7 @@
       color: #fff;
       border: none;
       padding: 8px 10px;
-      border-radius: 8px;
+      border-radius: 0px;
       cursor: pointer;
       display: none;
     }
@@ -190,7 +190,7 @@
 #editCanvas {
   background: #fff;
   border: 1px solid #ccc;
-  border-radius: 12px;
+  border-radius: 0px;
   box-shadow: 0 4px 18px rgba(0,0,0,0.12);
 }
 
@@ -201,7 +201,7 @@
   background: #000;
   color: #fff;
   border: none;
-  border-radius: 10px;
+  border-radius: 0px;
   cursor: pointer;
   font-size: 15px;
   font-weight: 300;
@@ -225,7 +225,7 @@
 <div class="sidebar">
   <button class="menu-btn active" data-target="nemo">Nemo Graphics</button>
   <button class="menu-btn" data-target="graphic">Nemo Brush</button>
-  <button class="menu-btn" data-target="library">Library</button>
+  <button class="menu-btn" data-target="library">Nemo Library</button>
   <button class="menu-btn" data-target="party">!!!Party Time!!!</button>
 </div>
 
@@ -251,7 +251,7 @@
   <div id="graphic" class="screen">
   <h1>Nemo Brush</h1>
   <p style="text-align:center; line-height: 1.5rem; margin-bottom: 20px;">
-    당신이 만든 그래픽을 브러쉬로 사용해보세요.<br>저장한 그래픽은 라이브러리에서 확인할 수 있습니다.
+    Nemo Library에서 마음에 드는 그래픽을 저장하고 브러쉬로 사용해보세요.<br>다른 이미지라도 좋습니다.
   </p>
 
   <div id="graphicWrap">
@@ -262,8 +262,10 @@
       <h2 style="margin-top:0; font-family: pretendard; font-size: 1rem; text-align: center;">브러쉬 옵션</h2>
 
       <button id="loadFromLibrary" class="nemo-btn">브러쉬 선택</button>
-
       <button id="toggleSymmetry" class="nemo-btn">대칭 OFF</button>
+      <button id="clearCanvas" class="nemo-btn">전체<br>초기화</button>
+      <button id="saveCanvas" class="nemo-btn">캔버스 저장</button>
+
 
     </div>
   </div>
@@ -720,10 +722,9 @@ animateBg();
     partyExit.style.display = "none";
   }
 
-  // 메뉴에서 Party 클릭 시 자동 실행
   document.querySelector('[data-target="party"]').addEventListener("click", startParty);
 
-  // 키 입력 이벤트
+
   window.addEventListener("keydown", (e) => {
     if (!partyMode) return;
     unlockAudio();
@@ -733,24 +734,20 @@ animateBg();
 })();
 </script>
 <script>
+let startX = 0;
+let startY = 0;
+
+
 const editCanvas = document.getElementById("editCanvas");
 const ctx = editCanvas.getContext("2d");
 
-// 기본 하얀 배경
-ctx.fillStyle = "#ffffff";
-ctx.fillRect(0, 0, editCanvas.width, editCanvas.height);
 
-// 현재 브러쉬로 사용할 이미지
 let brushImage = null;
 
-// 시메트리 여부
 let symmetry = false;
 
-/* ─────────────────────────────
-   1. 라이브러리 이미지 불러오기
-─────────────────────────────── */
 document.getElementById("loadFromLibrary").addEventListener("click", () => {
-  // 파일 선택창 생성
+
   const input = document.createElement("input");
   input.type = "file";
   input.accept = "image/*";
@@ -779,7 +776,14 @@ document.getElementById("toggleSymmetry").addEventListener("click", () => {
 
 let drawing = false;
 
-editCanvas.addEventListener("mousedown", (e) => (drawing = true));
+editCanvas.addEventListener("mousedown", (e) => {
+  drawing = true;
+
+  const rect = editCanvas.getBoundingClientRect();
+  startX = e.clientX - rect.left;
+  startY = e.clientY - rect.top;
+});
+
 editCanvas.addEventListener("mouseup", () => (drawing = false));
 editCanvas.addEventListener("mouseleave", () => (drawing = false));
 
@@ -787,18 +791,42 @@ editCanvas.addEventListener("mousemove", (e) => {
   if (!drawing || !brushImage) return;
 
   const rect = editCanvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
+  let x = e.clientX - rect.left;
+  let y = e.clientY - rect.top;
 
-  // 기본 브러쉬
+  const dx = Math.abs(x - startX);
+  const dy = Math.abs(y - startY);
+
+  
+  if (dx > dy) {
+    y = startY; 
+  } else {
+    x = startX; 
+  }
+
   ctx.drawImage(brushImage, x - 40, y - 40, 80, 80);
 
-  // 대칭 브러쉬
   if (symmetry) {
     const mirrorX = editCanvas.width - x;
     ctx.drawImage(brushImage, mirrorX - 40, y - 40, 80, 80);
   }
 });
+
+
+document.getElementById("saveCanvas").addEventListener("click", () => {
+  const link = document.createElement("a");
+  link.download = "nemo-brush.png";
+  link.href = editCanvas.toDataURL("image/png");
+  link.click();
+});
+
+document.getElementById("clearCanvas").addEventListener("click", () => {
+  if (!confirm("캔버스를 전체 초기화할까요?")) return;
+
+  ctx.clearRect(0, 0, editCanvas.width, editCanvas.height);
+
+
+
 </script>
 
 
